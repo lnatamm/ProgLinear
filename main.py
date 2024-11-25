@@ -1,4 +1,5 @@
 from ortools.linear_solver import pywraplp
+import math
 c = [1, 2]
 A = [
     [1, 2],
@@ -31,10 +32,36 @@ def PLSolver(c, A, b):
         print(f"Função Objetivo = {solver.Objective().Value():0.2f}")
         print(f"x = {x.solution_value():0.2f}")
         print(f"y = {y.solution_value():0.2f}")
+        r = []
+        for i in range(len(vars)):
+            r.append(vars[i].solution_value())
+        return r
     else:
         print("O problema não possui solução ótima.")
 
-def BranchAndBound():
-    pass
+def checkIntegrability(solutions):
+    for i in range(len(solutions)):
+        if(not int(solutions[i])):
+            return False
+    return True
+
+def getDecimalVar(solutions):
+    for i in range(len(solutions)):
+        if(not int(solutions[i])):
+            return solutions[i]
+    return None
+
+
+def BranchAndBound(solver, solutions, bestBranchSolution, b):
+    #solver.Add()
+    bestBranchSolution = solver.Objective().Value()
+    decimal = getDecimalVar(solutions)
+    ceil = math.ceil(decimal)
+    floor = math.floor(decimal)
+    BranchAndBound(solver, solutions, bestBranchSolution, ceil)
+    BranchAndBound(solver, solutions, bestBranchSolution, floor)
+    if(checkIntegrability(solutions)):
+        print("Poda por Integrabilidade")
+    
 
 PLSolver(c, A, b)
