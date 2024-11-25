@@ -1,47 +1,27 @@
 from ortools.linear_solver import pywraplp
-
 def BranchAndBound():
-    # Create the linear solver with the GLOP backend.
     solver = pywraplp.Solver.CreateSolver("GLOP")
     if not solver:
-        print("Could not create solver GLOP")
         return
 
-    # Create the variables x and y.
-    x_var = solver.NumVar(0, 1, "x")
-    y_var = solver.NumVar(0, 2, "y")
+    #Variáveis
+    x = solver.NumVar(0, solver.infinity(), "x")
+    y = solver.NumVar(0, solver.infinity(), "y")
 
-    print("Number of variables =", solver.NumVariables())
+    #Função Objetivo 
+    solver.Maximize(x + y)
 
-    infinity = solver.infinity()
-    # Create a linear constraint, x + y <= 2.
-    constraint = solver.Constraint(-infinity, 2, "ct")
-    constraint.SetCoefficient(x_var, 1)
-    constraint.SetCoefficient(y_var, 1)
+    #Condições
+    solver.Add(x + y < 0)
 
-    print("Number of constraints =", solver.NumConstraints())
+    status = solver.Solve()
 
-    # Create the objective function, 3 * x + y.
-    objective = solver.Objective()
-    objective.SetCoefficient(x_var, 3)
-    objective.SetCoefficient(y_var, 1)
-    objective.SetMaximization()
-
-    print(f"Solving with {solver.SolverVersion()}")
-    result_status = solver.Solve()
-
-    print(f"Status: {result_status}")
-    if result_status != pywraplp.Solver.OPTIMAL:
-        print("The problem does not have an optimal solution!")
-        if result_status == pywraplp.Solver.FEASIBLE:
-            print("A potentially suboptimal solution was found")
-        else:
-            print("The solver could not solve the problem.")
-            return
-
-    print("Solution:")
-    print("Objective value =", objective.Value())
-    print("x =", x_var.solution_value())
-    print("y =", y_var.solution_value())
+    if status == pywraplp.Solver.OPTIMAL:
+        print("Solução:")
+        print(f"Função Objetivo = {solver.Objective().Value():0.2f}")
+        print(f"x = {x.solution_value():0.2f}")
+        print(f"y = {y.solution_value():0.2f}")
+    else:
+        print("O problema não possui solução ótima.")
 
 BranchAndBound()
