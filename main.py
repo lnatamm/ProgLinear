@@ -1,18 +1,28 @@
 from ortools.linear_solver import pywraplp
-def BranchAndBound():
+c = [1, 2]
+A = [
+    [1, 2],
+    [3, 4]
+]
+b = [5, 6]
+def PLSolver(c, A, b):
     solver = pywraplp.Solver.CreateSolver("GLOP")
     if not solver:
         return
 
+    m = len(A)
+
     #Variáveis
     x = solver.NumVar(0, solver.infinity(), "x")
     y = solver.NumVar(0, solver.infinity(), "y")
+    vars = [x, y]
 
     #Função Objetivo 
-    solver.Maximize(x + y)
+    solver.Maximize(solver.Sum(c[i]*vars[i] for i in range(len(c))))
 
     #Condições
-    solver.Add(x + y < 0)
+    for i in range(m):
+        solver.Add(solver.Sum(A[i][j]*vars[j] for j in range(len(A[i]))) <= b[i])
 
     status = solver.Solve()
 
@@ -24,4 +34,7 @@ def BranchAndBound():
     else:
         print("O problema não possui solução ótima.")
 
-BranchAndBound()
+def BranchAndBound():
+    pass
+
+PLSolver(c, A, b)
