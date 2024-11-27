@@ -1,11 +1,12 @@
 from ortools.linear_solver import pywraplp
 import math
-c = [1, 2]
+c = [3, 5]
 A = [
-    [1, 2],
-    [3, 4]
+    [2, 4],
+    [1, 0],
+    [0, 2]
 ]
-b = [5, 6]
+b = [25, 8, 10]
 negInf = -999999
 
 #Apenas printa uma linha
@@ -65,7 +66,7 @@ def PLSolver(c, A, b):
 #Função que faz a verificação de se todas as variáveis são inteiras
 def checkIntegrability(vars):
     for i in range(len(vars)):
-        if(not vars[i].solution_value().is_integer()):
+        if(not round(vars[i].solution_value(), 3).is_integer()):
             return False
     return True
 
@@ -104,7 +105,7 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRi
     print(f"Maior F.O Atual: {"Ainda não foi encontrada uma solução inteira" if bestBranchSolution[0][0] == negInf else bestBranchSolution[0][0]}")
     print(f"Subproblema: P{Pn[0]}")
     if viable == pywraplp.Solver.OPTIMAL:
-        objectiveValue = solver.Objective().Value()
+        objectiveValue = round(solver.Objective().Value(), 3)
         #Verificamos se a solução é inteira
         integrability = checkIntegrability(vars)
         #Verificamos se o valor da função objetiva é melhor que o último valor encontrado em uma solução inteira
@@ -115,7 +116,7 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRi
         print(f"Solução:")
         for i, var in enumerate(vars):
             print(f"x{i} = {var.solution_value():0.2f}")
-            varsValues.append([f"x{i}", var.solution_value()])
+            varsValues.append([f"x{i}", round(var.solution_value(), 3)])
         if(optimality):
             print("Poda por Optimalidade")
             bigPrint()
