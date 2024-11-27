@@ -27,11 +27,9 @@ def GetNewSolver(c, A, b, conditionsLeft, conditionsRight):
     for i in range(m):
         solver.Add(solver.Sum(A[i][j]*vars[j] for j in range(len(A[i]))) <= b[i])
     if(conditionsLeft):
-        print("Hm")
         for i in range(len(conditionsLeft)):
             solver.Add(conditionsLeft[i][0] >= conditionsLeft[i][1])
     if(conditionsRight):
-        print("Hm")
         for i in range(len(conditionsRight)):
             solver.Add(conditionsRight[i][0] <= conditionsRight[i][1])
 
@@ -51,9 +49,11 @@ def PLSolver(c, A, b):
         print(f"Função Objetivo = {solver.Objective().Value():0.2f}")
         for i, var in enumerate(vars):
             print(f"x{i} = {var.solution_value():0.2f}")
+        print("-----------------")
         return solver, vars
     else:
         print("O problema não possui solução ótima.")
+        print("-----------------")
         return None, None
 
 def checkIntegrability(vars):
@@ -68,68 +68,12 @@ def getDecimalVar(vars):
             return vars[i]
     return None
 
-# #Diz respeito a parte esquerda do branch and bound
-# def BranchLeft(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn):
-#     conditionsL = conditionsLeft.copy()
-#     conditionsR = conditionsRight.copy()
-#     #Criamos um novo solver com as mesmas condicoes
-#     solver, vars = GetNewSolver(c, A, b, conditionsL, conditionsR)
-#     #Calculamos o teto
-#     ceil = math.ceil(decimalVar.solution_value())
-#     #Adicionamos a condição
-#     print(f"Adicionando {ceil} na condicao")
-#     solver.Add(decimalVar >= ceil)
-#     conditionsL.append([decimalVar, ceil])
-#     #Resolvemos o problema
-#     viable = solver.Solve()
-#     print(f"Subproblema: P{Pn}")
-#     if viable == pywraplp.Solver.OPTIMAL:
-#         objectiveValue = solver.Objective().Value()
-#         integrability = checkIntegrability(vars)
-#         optimality = bestBranchSolution >= objectiveValue
-#         print(f"Função Objetivo = {solver.Objective().Value():0.2f}")
-#         print("Solução:")
-#         for i, var in enumerate(vars):
-#             print(f"x{i} = {var.solution_value():0.2f}")
-#         print(integrability)
-#         print(f"Poda por integrabilidade: {integrability}")
-#         print(f"Poda por optimalidade: {optimality}")
-#         #BranchAndBound(solver, vars, bestBranchSolution, c, A, b)
-#     else:
-#         print("Poda por inviabilidade")
-
-# #Diz respeito a parte direita do branch and bound
-# def BranchRight(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn):
-#     conditionsL = conditionsLeft.copy()
-#     conditionsR = conditionsRight.copy()
-#     #Criamos um novo solver com as mesmas condicoes
-#     solver, vars = GetNewSolver(c, A, b, conditionsL, conditionsR)
-#     #Calculamos o piso
-#     floor = math.floor(decimalVar.solution_value())
-#     print(f"Adicionando {floor} na condicao")
-#     #Adicionamos a condição
-#     solver.Add(decimalVar <= floor)
-#     conditionsR.append([decimalVar, floor])
-#     #Resolvemos o problema
-#     viable = solver.Solve()
-
-#     print(f"Subproblema: P{Pn}")
-#     if viable == pywraplp.Solver.OPTIMAL:
-#         objectiveValue = solver.Objective().Value()
-#         integrability = checkIntegrability(vars)
-#         optimality = bestBranchSolution >= objectiveValue
-#         if(bestBranchSolution == negInf):
-#             bestBranchSolution = objectiveValue
-#         print(f"Função Objetivo = {objectiveValue:0.2f}")
-#         print(f"Solução:")
-#         for i, var in enumerate(vars):
-#             print(f"x{i} = {var.solution_value():0.2f}")
-#         print(f"Poda por integrabilidade: {integrability}")
-#         print(f"Poda por optimalidade: {optimality}")
-        
-#         #BranchAndBound(solver, vars, bestBranchSolution, c, A, b)
-#     else:
-#         print("Poda por inviabilidade")
+def GetBestSolution(integerSolutions):
+    bestSolution = negInf
+    for solution in integerSolutions:
+        if(solution > bestSolution):
+            bestSolution = solution
+    return bestSolution
 
 def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn, LorR):
     conditionsL = conditionsLeft.copy()
@@ -140,13 +84,13 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRi
         #Calculamos o teto
         ceil = math.ceil(decimalVar.solution_value())
         #Adicionamos a condição
-        print(f"Adicionando {ceil} na condicao")
+        print(f"Adicionando {decimalVar} >= {ceil} na condicao")
         solver.Add(decimalVar >= ceil)
         conditionsL.append([decimalVar, ceil])
     else: #Branch da Direita
         #Calculamos o piso
         floor = math.floor(decimalVar.solution_value())
-        print(f"Adicionando {floor} na condicao")
+        print(f"Adicionando {decimalVar} <= {floor} na condicao")
         #Adicionamos a condição
         solver.Add(decimalVar <= floor)
         conditionsR.append([decimalVar, floor])
@@ -158,30 +102,34 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRi
     if viable == pywraplp.Solver.OPTIMAL:
         objectiveValue = solver.Objective().Value()
         integrability = checkIntegrability(vars)
-        optimality = bestBranchSolution >= objectiveValue
+        optimality = (bestBranchSolution >= objectiveValue) and integerSolutions
         if(bestBranchSolution == negInf):
             bestBranchSolution = objectiveValue
         print(f"Função Objetivo = {objectiveValue:0.2f}")
         print(f"Solução:")
         for i, var in enumerate(vars):
             print(f"x{i} = {var.solution_value():0.2f}")
-        print(f"Poda por integrabilidade: {integrability}")
-        print(f"Poda por optimalidade: {optimality}")
-        #if integer integerSolutions.append(objectiveValue)
-        #BranchAndBound(solver, vars, bestBranchSolution, c, A, b)
+        if(integrability):
+            print(f"Poda por integrabilidade")
+            print("-----------------")
+            integerSolutions.append(objectiveValue)
+        elif(optimality):
+            print("Poda por optimalidade")
+            print("-----------------")
+        else:
+            print("-----------------")
+            BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsL, conditionsR, integerSolutions, Pn)
     else:
         print("Poda por inviabilidade")
+        print("-----------------")
 
 #Função que vai chamar a esquerda e direita
 def BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn):
     decimalVar = getDecimalVar(vars)
     Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn+1, 0)
     Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn+2, 1)
-    if(checkIntegrability(vars)):
-        print("Poda por Integrabilidade")
-    
+    return GetBestSolution(integerSolutions)
 
 solver, vars = PLSolver(c, A, b)
-BranchAndBound(solver, vars, negInf, c, A, b, [], [], [],0)
-for i in range(len(vars)):
-    print(vars[i].solution_value())
+bestSolution = BranchAndBound(solver, vars, negInf, c, A, b, [], [], [],0)
+print(f"Melhor solução inteira: {bestSolution}")
