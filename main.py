@@ -8,6 +8,9 @@ A = [
 b = [5, 6]
 negInf = -999999
 
+def bigPrint():
+    print("----------------------------------------------------------------------")
+
 #Função que cria o solver
 def GetNewSolver(c, A, b, conditionsLeft, conditionsRight):
     solver = pywraplp.Solver.CreateSolver("GLOP")
@@ -45,16 +48,18 @@ def PLSolver(c, A, b):
     status = solver.Solve()
 
     if status == pywraplp.Solver.OPTIMAL:
+        bigPrint()
         print("Solução:")
         print(f"Função Objetivo = {solver.Objective().Value():0.2f}")
         for i, var in enumerate(vars):
             print(f"x{i} = {var.solution_value():0.2f}")
-        print("-----------------")
-        return solver, vars
+        print("Iniciando o Branch and Bound")
+        bigPrint()
+        return BranchAndBound(solver, vars, [[negInf]], c, A, b, [], [], [0])
     else:
         print("O problema não possui solução ótima.")
-        print("-----------------")
-        return None, None
+        bigPrint()
+        return None
 
 def checkIntegrability(vars):
     for i in range(len(vars)):
@@ -68,14 +73,8 @@ def getDecimalVar(vars):
             return vars[i]
     return None
 
-def GetBestSolution(integerSolutions):
-    bestSolution = negInf
-    for solution in integerSolutions:
-        if(solution > bestSolution):
-            bestSolution = solution
-    return bestSolution
-
-def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn, LorR):
+def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn, LorR):
+    Pn[0] += 1
     conditionsL = conditionsLeft.copy()
     conditionsR = conditionsRight.copy()
     #Criamos um novo solver com as mesmas condicoes
@@ -97,39 +96,45 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRi
     
     #Resolvemos o problema
     viable = solver.Solve()
-
-    print(f"Subproblema: P{Pn}")
+    print(f"Maior F.O Atual: {"Ainda não foi encontrada uma solução inteira" if bestBranchSolution[0][0] == negInf else bestBranchSolution[0][0]}")
+    print(f"Subproblema: P{Pn[0]}")
     if viable == pywraplp.Solver.OPTIMAL:
         objectiveValue = solver.Objective().Value()
         integrability = checkIntegrability(vars)
-        optimality = (bestBranchSolution >= objectiveValue) and integerSolutions
-        if(bestBranchSolution == negInf):
-            bestBranchSolution = objectiveValue
+        optimality = (bestBranchSolution[0][0] >= objectiveValue)
+        varsValues = []
         print(f"Função Objetivo = {objectiveValue:0.2f}")
         print(f"Solução:")
         for i, var in enumerate(vars):
             print(f"x{i} = {var.solution_value():0.2f}")
-        if(integrability):
-            print(f"Poda por integrabilidade")
-            print("-----------------")
-            integerSolutions.append(objectiveValue)
-        elif(optimality):
-            print("Poda por optimalidade")
-            print("-----------------")
+            varsValues.append([f"x{i}", var.solution_value()])
+        if(optimality):
+            print("Poda por Optimalidade")
+            bigPrint()
+        elif(integrability):
+            print(f"Poda por Integrabilidade")
+            bestBranchSolution[0] = [objectiveValue, varsValues]
+            print(f"Nova solução inteira encontrada! Valor da F.O: {bestBranchSolution[0][0]}")
+            bigPrint()
         else:
-            print("-----------------")
-            BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsL, conditionsR, integerSolutions, Pn)
+            bigPrint()
+            BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsL, conditionsR, Pn)
     else:
-        print("Poda por inviabilidade")
-        print("-----------------")
+        print("Poda por Inviabilidade")
+        bigPrint()
 
 #Função que vai chamar a esquerda e direita
-def BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn):
+def BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsLeft, conditionsRight, Pn):
     decimalVar = getDecimalVar(vars)
-    Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn+1, 0)
-    Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, integerSolutions, Pn+2, 1)
-    return GetBestSolution(integerSolutions)
+    Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn, 0)
+    Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn, 1)
+    return bestBranchSolution[0]
 
-solver, vars = PLSolver(c, A, b)
-bestSolution = BranchAndBound(solver, vars, negInf, c, A, b, [], [], [],0)
-print(f"Melhor solução inteira: {bestSolution}")
+bestSolution = PLSolver(c, A, b)
+if(bestSolution):
+    print(f"Solução ótima")
+    print(f"Função Objetivo: {bestSolution[0]}")
+    print(f"Solução:")
+    for i in range(len(bestSolution[1])):
+        print(f"{bestSolution[1][i][0]} = {bestSolution[1][i][1]}")
+    bigPrint()
