@@ -73,7 +73,7 @@ def checkIntegrability(vars):
 #Função que retorna a variável decimal a ser trabalhada
 def getDecimalVar(vars):
     for i in range(len(vars)):
-        if(not vars[i].solution_value().is_integer()):
+        if(not round(vars[i].solution_value(), 3).is_integer()):
             return vars[i]
     return None
 
