@@ -45,7 +45,7 @@ def GetNewSolver(c, A, b, n, conditionsLeft, conditionsRight):
     solver.Maximize(solver.Sum(c[i]*vars[i] for i in range(len(c))))
     #Condições
     for i in range(m):
-        solver.Add(solver.Sum(A[i][j]*vars[j] for j in range(len(A[i]))) <= b[i])
+        solver.Add(solver.Sum(A[i][j]*vars[j] for j in range(len(A[i]))) == b[i])
     #Parte exclusiva do Branch and Bound para salvar as condições que foram feitas em cada branch
     #já que para cada execução do Branch and Bound nós criamos um solver novo
     if(conditionsLeft):
