@@ -76,6 +76,7 @@ def PLSolver(c, A, b, n):
         #Chamamos o Branch and Bound para procurar uma solução inteira
         return BranchAndBound(solver, vars, [[negInf]], c, A, b, n,[], [], [0])
     else:
+        bigPrint()
         print("O problema não possui solução ótima.")
         bigPrint()
         return None
