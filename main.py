@@ -1,20 +1,39 @@
 from ortools.linear_solver import pywraplp
-import math
-c = [3, 5]
-A = [
-    [2, 4],
-    [1, 0],
-    [0, 2]
-]
-b = [25, 8, 10]
+import math, os
+
 negInf = -999999
+
+#Lê o arquivo "LP.txt"
+def readFile():
+    filePath = os.getcwd() + "\\LP.txt"
+    file = open(filePath)
+    line = file.readline().split()
+    n = int(line[0])
+    m = int(line[1])
+    c = []
+    A = []
+    b = []
+    line = file.readline().split()
+    for i in range(n):
+        c.append(round(float(line[i]), 3))
+
+    for i in range(m):
+        A.append([])
+        line = file.readline().split()
+        for j in range(n+1):
+            if(j != n):
+                A[i].append(round(float(line[j]), 3))
+            else:
+                b.append(round(float(line[j]), 3))
+
+    return c, A, b, n
 
 #Apenas printa uma linha
 def bigPrint():
     print("----------------------------------------------------------------------")
 
 #Função que cria o solver para garantir que as condições sejam exclusivas para cada branch
-def GetNewSolver(c, A, b, conditionsLeft, conditionsRight):
+def GetNewSolver(c, A, b, n, conditionsLeft, conditionsRight):
     #Cria um solver utilizando o "GLOP" para problemas de otimização reais
     solver = pywraplp.Solver.CreateSolver("GLOP")
     if not solver:
@@ -22,7 +41,7 @@ def GetNewSolver(c, A, b, conditionsLeft, conditionsRight):
     m = len(A)
     # Definição de Variáveis
     vars = []
-    for i in range(len(c)):
+    for i in range(n):
         vars.append(solver.NumVar(0, solver.infinity(), f"x{i}"))
     #Função Objetivo de Maximização
     solver.Maximize(solver.Sum(c[i]*vars[i] for i in range(len(c))))
@@ -41,9 +60,9 @@ def GetNewSolver(c, A, b, conditionsLeft, conditionsRight):
     return solver, vars
 
 #Função que resolve o problema e posteriormente vai chamar o Branch and Bound
-def PLSolver(c, A, b):
+def PLSolver(c, A, b, n):
     #Inicialização do Solver
-    solver, vars = GetNewSolver(c, A, b, 0, 0)
+    solver, vars = GetNewSolver(c, A, b, n, 0, 0)
     if not solver:
         return
     #Resolvemos o problema
@@ -57,7 +76,7 @@ def PLSolver(c, A, b):
         print("Iniciando o Branch and Bound")
         bigPrint()
         #Chamamos o Branch and Bound para procurar uma solução inteira
-        return BranchAndBound(solver, vars, [[negInf]], c, A, b, [], [], [0])
+        return BranchAndBound(solver, vars, [[negInf]], c, A, b, n,[], [], [0])
     else:
         print("O problema não possui solução ótima.")
         bigPrint()
@@ -78,14 +97,14 @@ def getDecimalVar(vars):
     return None
 
 #Rotina de execução do Branch and Bound. LorR é uma flag que indica se a execução é da esquerda ou direita
-def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn, LorR):
+def Branch(bestBranchSolution, decimalVar, c, A, b, n,conditionsLeft, conditionsRight, Pn, LorR):
     #Atualizamos o valor de Pn (Está armazenado em um array para que seu valor seja passado por referência em vez de valor)
     Pn[0] += 1
     #Fazemos uma cópia de cada condição para pegar apenas o valor e não a referência do array
     conditionsL = conditionsLeft.copy()
     conditionsR = conditionsRight.copy()
     #Criamos um novo solver com as mesmas condições
-    solver, vars = GetNewSolver(c, A, b, conditionsL, conditionsR)
+    solver, vars = GetNewSolver(c, A, b, n, conditionsL, conditionsR)
     if(LorR == 0): #Branch da Esquerda
         #Calculamos o teto
         ceil = math.ceil(decimalVar.solution_value())
@@ -129,20 +148,22 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRi
         else:
             bigPrint()
             #Caso ainda não tenhamos encontrado uma solução inteira, executamos o Branch and Bound novamente
-            BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsL, conditionsR, Pn)
+            BranchAndBound(solver, vars, bestBranchSolution, c, A, b, n, conditionsL, conditionsR, Pn)
     else:
         print("Poda por Inviabilidade")
         bigPrint()
 
 #Função que vai chamar as rotinas da esquerda e direita do Branch and Bound
-def BranchAndBound(solver, vars, bestBranchSolution, c, A, b, conditionsLeft, conditionsRight, Pn):
+def BranchAndBound(solver, vars, bestBranchSolution, c, A, b, n, conditionsLeft, conditionsRight, Pn):
     decimalVar = getDecimalVar(vars)
-    Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn, 0)
-    Branch(bestBranchSolution, decimalVar, c, A, b, conditionsLeft, conditionsRight, Pn, 1)
+    Branch(bestBranchSolution, decimalVar, c, A, b, n, conditionsLeft, conditionsRight, Pn, 0)
+    Branch(bestBranchSolution, decimalVar, c, A, b, n, conditionsLeft, conditionsRight, Pn, 1)
     return bestBranchSolution[0]
 
+c, A, b, n = readFile()
+
 #Chamada do método principal
-bestSolution = PLSolver(c, A, b)
+bestSolution = PLSolver(c, A, b, n)
 if(bestSolution):
     print(f"Solução ótima")
     print(f"Função Objetivo: {bestSolution[0]}")
