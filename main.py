@@ -16,7 +16,6 @@ def readFile():
     line = file.readline().split()
     for i in range(n):
         c.append(round(float(line[i]), 3))
-
     for i in range(m):
         A.append([])
         line = file.readline().split()
@@ -25,7 +24,6 @@ def readFile():
                 A[i].append(round(float(line[j]), 3))
             else:
                 b.append(round(float(line[j]), 3))
-
     return c, A, b, n
 
 #Apenas printa uma linha
