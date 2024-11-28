@@ -74,7 +74,7 @@ def PLSolver(c, A, b, n):
         print("Iniciando o Branch and Bound")
         bigPrint()
         #Chamamos o Branch and Bound para procurar uma solução inteira
-        return BranchAndBound(solver, vars, [[negInf]], c, A, b, n,[], [], [0])
+        return BranchAndBound(solver, vars, [[negInf]], c, A, b, n,[], [], [0], 0)
     else:
         bigPrint()
         print("O problema não possui solução ótima.")
@@ -96,7 +96,7 @@ def getDecimalVar(vars):
     return None
 
 #Rotina de execução do Branch and Bound. LorR é uma flag que indica se a execução é da esquerda ou direita
-def Branch(bestBranchSolution, decimalVar, c, A, b, n,conditionsLeft, conditionsRight, Pn, LorR):
+def Branch(bestBranchSolution, decimalVar, c, A, b, n,conditionsLeft, conditionsRight, Pn, parentPn, LorR):
     #Atualizamos o valor de Pn (Está armazenado em um array para que seu valor seja passado por referência em vez de valor)
     Pn[0] += 1
     #Fazemos uma cópia de cada condição para pegar apenas o valor e não a referência do array
@@ -105,6 +105,8 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, n,conditionsLeft, conditions
     #Criamos um novo solver com as mesmas condições
     solver, vars = GetNewSolver(c, A, b, n, conditionsL, conditionsR)
     if(LorR == 0): #Branch da Esquerda
+        print(f"Branch da Esquerda do P{parentPn - 1}")
+        print(f"Variável decimal: {decimalVar} = {decimalVar.solution_value():0.2f}")
         #Calculamos o teto
         ceil = math.ceil(decimalVar.solution_value())
         #Adicionamos a condição
@@ -112,6 +114,8 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, n,conditionsLeft, conditions
         solver.Add(decimalVar >= ceil)
         conditionsL.append([decimalVar, ceil])
     else: #Branch da Direita
+        print(f"Branch da Direita do P{parentPn - 2}")
+        print(f"Variável decimal: {decimalVar} = {decimalVar.solution_value():0.2f}")
         #Calculamos o piso
         floor = math.floor(decimalVar.solution_value())
         print(f"Adicionando {decimalVar} <= {floor} na condicao")
@@ -147,16 +151,16 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, n,conditionsLeft, conditions
         else:
             bigPrint()
             #Caso ainda não tenhamos encontrado uma solução inteira, executamos o Branch and Bound novamente
-            BranchAndBound(solver, vars, bestBranchSolution, c, A, b, n, conditionsL, conditionsR, Pn)
+            BranchAndBound(solver, vars, bestBranchSolution, c, A, b, n, conditionsL, conditionsR, Pn, parentPn)
     else:
         print("Poda por Inviabilidade")
         bigPrint()
 
 #Função que vai chamar as rotinas da esquerda e direita do Branch and Bound
-def BranchAndBound(solver, vars, bestBranchSolution, c, A, b, n, conditionsLeft, conditionsRight, Pn):
+def BranchAndBound(solver, vars, bestBranchSolution, c, A, b, n, conditionsLeft, conditionsRight, Pn, parentPn):
     decimalVar = getDecimalVar(vars)
-    Branch(bestBranchSolution, decimalVar, c, A, b, n, conditionsLeft, conditionsRight, Pn, 0)
-    Branch(bestBranchSolution, decimalVar, c, A, b, n, conditionsLeft, conditionsRight, Pn, 1)
+    Branch(bestBranchSolution, decimalVar, c, A, b, n, conditionsLeft, conditionsRight, Pn, parentPn+1, 0)
+    Branch(bestBranchSolution, decimalVar, c, A, b, n, conditionsLeft, conditionsRight, Pn, parentPn+2, 1)
     return bestBranchSolution[0]
 
 c, A, b, n = readFile()
