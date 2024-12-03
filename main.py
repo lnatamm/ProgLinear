@@ -45,15 +45,15 @@ def GetNewSolver(c, A, b, n, conditionsLeft, conditionsRight):
     solver.Maximize(solver.Sum(c[i]*vars[i] for i in range(len(c))))
     #Condições
     for i in range(m):
-        solver.Add(solver.Sum(A[i][j]*vars[j] for j in range(len(A[i]))) == b[i])
+        solver.Add(solver.Sum(A[i][j]*vars[j] for j in range(len(A[i]))) <= b[i])
     #Parte exclusiva do Branch and Bound para salvar as condições que foram feitas em cada branch
     #já que para cada execução do Branch and Bound nós criamos um solver novo
     if(conditionsLeft):
         for i in range(len(conditionsLeft)):
-            solver.Add(conditionsLeft[i][0] >= conditionsLeft[i][1])
+            solver.Add(conditionsLeft[i][0] <= conditionsLeft[i][1])
     if(conditionsRight):
         for i in range(len(conditionsRight)):
-            solver.Add(conditionsRight[i][0] <= conditionsRight[i][1])
+            solver.Add(conditionsRight[i][0] >= conditionsRight[i][1])
 
     return solver, vars
 
@@ -108,20 +108,20 @@ def Branch(bestBranchSolution, decimalVar, c, A, b, n,conditionsLeft, conditions
         print(f"Branch da Esquerda do P{parentPn - 1}")
         print(f"Variável decimal: {decimalVar} = {decimalVar.solution_value():0.2f}")
         #Calculamos o teto
-        ceil = math.ceil(decimalVar.solution_value())
+        floor = math.floor(decimalVar.solution_value())
         #Adicionamos a condição
-        print(f"Adicionando {decimalVar} >= {ceil} na condicao")
-        solver.Add(decimalVar >= ceil)
-        conditionsL.append([decimalVar, ceil])
+        print(f"Adicionando {decimalVar} <= {floor} na condicao")
+        solver.Add(decimalVar <= floor)
+        conditionsL.append([decimalVar, floor])
     else: #Branch da Direita
         print(f"Branch da Direita do P{parentPn - 2}")
         print(f"Variável decimal: {decimalVar} = {decimalVar.solution_value():0.2f}")
         #Calculamos o piso
-        floor = math.floor(decimalVar.solution_value())
-        print(f"Adicionando {decimalVar} <= {floor} na condicao")
+        ceil = math.ceil(decimalVar.solution_value())
+        print(f"Adicionando {decimalVar} >= {ceil} na condicao")
         #Adicionamos a condição
-        solver.Add(decimalVar <= floor)
-        conditionsR.append([decimalVar, floor])
+        solver.Add(decimalVar >= ceil)
+        conditionsR.append([decimalVar, ceil])
     #Resolvemos o problema
     viable = solver.Solve()
     print(f"Maior F.O Atual: {"Ainda não foi encontrada uma solução inteira" if bestBranchSolution[0][0] == negInf else bestBranchSolution[0][0]}")
