@@ -19,6 +19,12 @@ Abra a pasta "Branch and Bound", altere o conteúdo do arquivo LP.txt da seguint
 
 No exemplo padrão do LP.txt temos:
 <pre>
+2 3
+3 5
+2 4 25
+1 0 8
+0 2 10
+
 2 variáveis, 3 condições  
 Função objetivo: 3𝑥1 + 5𝑥2
 Condições:
