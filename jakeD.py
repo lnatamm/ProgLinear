@@ -60,7 +60,7 @@ def Flux(Costs):
     viable = solver.Solve()
     if viable == pywraplp.Solver.OPTIMAL:
         print("Solução:")
-        print(f"Função Objetivo = {solver.Objective().Value():0.4f}")
+        print(f"Função Objetivo = {solver.Objective().Value():0.4f} milhões de U$")
         print(f"Transações de Ienes (em Milhões de U$)")
         print(f"Iene para Rúpia: {(x[0][1].solution_value()):.2f}")
         print(f"Iene para Ringgit: {(x[0][2].solution_value()):.2f}")
