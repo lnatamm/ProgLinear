@@ -5,7 +5,7 @@ negInf = -999999
 
 #Lê o arquivo "LP.txt"
 def readFile():
-    filePath = os.getcwd() + "\\Branch and Bound\\LP.txt"
+    filePath = os.getcwd() + "\\LP.txt"
     file = open(filePath)
     line = file.readline().split()
     n = int(line[0])
