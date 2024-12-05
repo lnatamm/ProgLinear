@@ -42,3 +42,19 @@ Por fim, execute o comando:
 
 
     py main.py
+
+### Problema de Jake Nguienes
+
+Abra a pasta "Problema de Jake Nguienes".
+
+Para o item B execute o comando:
+
+    py jakeB.py
+
+Para o item C execute o comando:
+
+    py jakeC.py
+
+Para o item D execute o comando:
+
+    py jakeD.py
